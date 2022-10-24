@@ -17,7 +17,7 @@ class MBTAReader(object):
         else:
             print('We\'ll try running without a key! This means that the API will limit us to 20 requests per minute.')
 
-        self.json = raw_json
+        self.json = True
         if self.json:
             print('Return type set to raw json, straight from the MBTA API!')
         else:
@@ -36,7 +36,7 @@ class MBTAReader(object):
             if not value: # skip unset arguments
                 continue
                 
-            if type(value) == list:
+            if type(value) in (list, tuple):
                 value = ",".join(value)
             if type(value) == int:
                 value = str(value)
@@ -55,8 +55,8 @@ class MBTAReader(object):
             elif key == 'id' and '_by_id' in endpoint:
                 payload[key] = value
 
-            elif endpoint in ('routes', 'route_by_id', 'stops', 'stops_by_id',
-                    'trips', 'trip_by_id', 'services', 'service_by_id', 'facilities', 'facility_by_id') \
+            elif endpoint in ('routes', 'routes_by_id', 'stops', 'stops_by_id',
+                    'trips', 'trips_by_id', 'services', 'services_by_id', 'facilities', 'facilities_by_id') \
                      and key in ('route', 'stop', 'trip', 'service', 'facility'):
                 payload['fields[%s]' % key] = value
 
@@ -84,19 +84,19 @@ class MBTAReader(object):
     @__ask_the_api
     def get_alerts(self,
         offset: str=None, limit: str=None, sort: str=None,
-        id: Union[str, list]=None,
-        route: Union[str, list]=None,
-        stop: Union[str, list]=None,
-        trip: Union[str, list]=None,
-        facility: Union[str, list]=None,
-        alert: Union[str, list]=None,
-        route_type: Union[str, list]=None,
+        id: Union[str, list, tuple]=None,
+        route: Union[str, list, tuple]=None,
+        stop: Union[str, list, tuple]=None,
+        trip: Union[str, list, tuple]=None,
+        facility: Union[str, list, tuple]=None,
+        alert: Union[str, list, tuple]=None,
+        route_type: Union[str, list, tuple]=None,
         direction_id: str=None,
         banner: str=None,
         datetime: str=None,
-        lifecycle: Union[str, list]=None,
-        severity: Union[str, list]=None,
-        activity: Union[str, list]=None):
+        lifecycle: Union[str, list, tuple]=None,
+        severity: Union[str, list, tuple]=None,
+        activity: Union[str, list, tuple]=None):
         endpoint = "alerts"
         return endpoint
 
@@ -104,7 +104,7 @@ class MBTAReader(object):
     def get_alert_by_id(self,
         id: str,
         include: Union[str,list]=None,
-        alert: Union[str, list]=None):
+        alert: Union[str, list, tuple]=None):
         endpoint = "alerts_by_id"
         return endpoint
 
@@ -112,9 +112,9 @@ class MBTAReader(object):
     def get_facilities(self,
         offset: str=None, limit: str=None, sort: str=None,
         include: Union[str,list]=None,
-        stop: Union[str, list]=None,
-        facility: Union[str, list]=None,
-        type: Union[str, list]=None,):
+        stop: Union[str, list, tuple]=None,
+        facility: Union[str, list, tuple]=None,
+        type: Union[str, list, tuple]=None,):
         endpoint = "facilities"
         return endpoint
 
@@ -122,15 +122,15 @@ class MBTAReader(object):
     def get_facility_by_id(self,
         id: str,
         include: Union[str,list]=None,
-        facility: Union[str, list]=None):
+        facility: Union[str, list, tuple]=None):
         endpoint = "facilities_by_id"
         return endpoint
 
     @__ask_the_api
     def get_lines(self,
         offset: str=None, limit: str=None, sort: str=None,
-        id: Union[str, list]=None,
-        line: Union[str, list]=None):
+        id: Union[str, list, tuple]=None,
+        line: Union[str, list, tuple]=None):
         endpoint = "lines"
         return endpoint
 
@@ -138,7 +138,7 @@ class MBTAReader(object):
     def get_line_by_id(self,
         id: str,
         include: Union[str,list]=None,
-        line: Union[str, list]=None):
+        line: Union[str, list, tuple]=None):
         endpoint = "lines_by_id"
         return endpoint
 
@@ -146,7 +146,7 @@ class MBTAReader(object):
     def get_live_facilities(self,
         offset: str=None, limit: str=None, sort: str=None,
         include: Union[str,list]=None,
-        id: Union[str, list]=None):
+        id: Union[str, list, tuple]=None):
         endpoint = "live_facilities"
         return endpoint
 
@@ -161,7 +161,7 @@ class MBTAReader(object):
     def get_prediction(self,
         offset: str=None, limit: str=None, sort: str=None,
         include: Union[str,list]=None,
-        stop: Union[str, list]=None,
+        stop: Union[str, list, tuple]=None,
         route: Union[str,list]=None,
         trip: Union[str,list]=None,
         prediction: Union[str,list]=None,
@@ -297,8 +297,8 @@ class MBTAReader(object):
     @__ask_the_api
     def get_stops_by_id(self,
         id: str,
-        include: Union[str, list]=None,
-        stop: Union[str, list]=None):
+        include: Union[str, list, tuple]=None,
+        stop: Union[str, list, tuple]=None):
         endpoint = "stops_by_id"
         return endpoint
 
@@ -354,7 +354,8 @@ class MBTAReader(object):
 if __name__ == '__main__':
     api = MBTAReader()
 
-#    print(api.get_prediction(stop='place-portr', limit='3'))
+#    print(api.get_prediction(stop='place-harsq', limit='3', direction_id='0'))
+#    print(api.get_line_by_id(id='line-Green',include=('routes')))
 #    print(api.get_alerts(limit='3'))
 #    print(api.get_facilities(limit='3'))
-    print(api.get_lines(limit='3'))
+#    print(api.get_lines(limit='3'))
