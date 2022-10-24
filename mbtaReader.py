@@ -1,3 +1,6 @@
+from multiprocessing.resource_sharer import stop
+from pickletools import read_unicodestring1
+from sched import scheduler
 import requests
 from datetime import date
 from typing import Union
@@ -5,7 +8,7 @@ from functools import wraps
 import mbtaObjects
 
 class MBTAReader(object):
-    def __init__(self, key: str=None, return_json: bool=True):
+    def __init__(self, key: str=None, raw_json: bool=True):
         self.headers = {'accept': 'application/vnd.api+json'}
 
         self.key = key
@@ -14,7 +17,7 @@ class MBTAReader(object):
         else:
             print('We\'ll try running without a key! This means that the API will limit us to 20 requests per minute.')
 
-        self.json = return_json
+        self.json = raw_json
         if self.json:
             print('Return type set to raw json, straight from the MBTA API!')
         else:
@@ -68,7 +71,8 @@ class MBTAReader(object):
         if not response_json:
             raise ValueError('No data returned from API, check your arguments.')
 
-        return response_json
+        if self.json:
+            return response_json
 
     def __ask_the_api(f):
         @wraps(f)
@@ -78,60 +82,71 @@ class MBTAReader(object):
         return wrapper
 
     @__ask_the_api
-    def alerts(self,
-        offset: str=None,
-        limit: str=None,
-        sort: str=None,
-        id: str=None):
+    def get_alerts(self,
+        offset: str=None, limit: str=None, sort: str=None,
+        id: Union[str, list]=None,
+        route: Union[str, list]=None,
+        stop: Union[str, list]=None,
+        trip: Union[str, list]=None,
+        facility: Union[str, list]=None,
+        alert: Union[str, list]=None,
+        route_type: Union[str, list]=None,
+        direction_id: str=None,
+        banner: str=None,
+        datetime: str=None,
+        lifecycle: Union[str, list]=None,
+        severity: Union[str, list]=None,
+        activity: Union[str, list]=None):
         endpoint = "alerts"
         return endpoint
 
     @__ask_the_api
-    def alert_by_id(self,
+    def get_alert_by_id(self,
         id: str,
-        include: Union[str,list]=None):
+        include: Union[str,list]=None,
+        alert: Union[str, list]=None):
         endpoint = "alerts_by_id"
         return endpoint
 
     @__ask_the_api
     def get_facilities(self,
-        offset: str=None,
-        limit: str=None,
-        sort: str=None,
-        include: Union[str,list]=None):
+        offset: str=None, limit: str=None, sort: str=None,
+        include: Union[str,list]=None,
+        stop: Union[str, list]=None,
+        facility: Union[str, list]=None,
+        type: Union[str, list]=None,):
         endpoint = "facilities"
         return endpoint
 
     @__ask_the_api
     def get_facility_by_id(self,
         id: str,
-        include: Union[str,list]=None):
+        include: Union[str,list]=None,
+        facility: Union[str, list]=None):
         endpoint = "facilities_by_id"
         return endpoint
 
     @__ask_the_api
     def get_lines(self,
-        offset: str=None,
-        limit: str=None,
-        sort: str=None,
-        id: str=None):
+        offset: str=None, limit: str=None, sort: str=None,
+        id: Union[str, list]=None,
+        line: Union[str, list]=None):
         endpoint = "lines"
         return endpoint
 
     @__ask_the_api
     def get_line_by_id(self,
         id: str,
-        include: Union[str,list]=None):
+        include: Union[str,list]=None,
+        line: Union[str, list]=None):
         endpoint = "lines_by_id"
         return endpoint
 
     @__ask_the_api
     def get_live_facilities(self,
-        offset: str=None,
-        limit: str=None,
-        sort: str=None,
+        offset: str=None, limit: str=None, sort: str=None,
         include: Union[str,list]=None,
-        id: str=None):
+        id: Union[str, list]=None):
         endpoint = "live_facilities"
         return endpoint
 
@@ -144,12 +159,18 @@ class MBTAReader(object):
 
     @__ask_the_api
     def get_prediction(self,
-        offset: str=None,
-        limit: str=None,
-        sort: str=None,
+        offset: str=None, limit: str=None, sort: str=None,
         include: Union[str,list]=None,
-        stop: Union[str, list]=None
-    ):
+        stop: Union[str, list]=None,
+        route: Union[str,list]=None,
+        trip: Union[str,list]=None,
+        prediction: Union[str,list]=None,
+        route_type: str=None,
+        direction_id: str=None,
+        latitude: str=None,
+        longitude: str=None,
+        radius: str=None,
+        route_pattern: str=None):
         endpoint = "predictions"
         return endpoint
 
@@ -159,14 +180,20 @@ class MBTAReader(object):
         limit: str=None,
         sort: str=None,
         include: Union[str,list]=None,
-        id: str=None):
+        id: Union[str,list]=None,
+        route: Union[str,list]=None,
+        stop: Union[str,list]=None,
+        type: Union[str,list]=None,
+        direction_id: str=None,
+        date: str=None):
         endpoint = "routes"
         return endpoint
 
     @__ask_the_api
     def get_route_by_id(self,
         id: str,
-        include: Union[str,list]=None):
+        include: Union[str,list]=None,
+        route: Union[str,list]=None):
         endpoint = "routes_by_id"
         return endpoint
 
@@ -176,7 +203,10 @@ class MBTAReader(object):
         limit: str=None,
         sort: str=None,
         include: Union[str,list]=None,
-        id: str=None):
+        id: Union[str,list]=None,
+        route: Union[str,list]=None,
+        stop: Union[str,list]=None,
+        direction_id: str=None):
         endpoint = "route_patterns"
         return endpoint
 
@@ -192,7 +222,17 @@ class MBTAReader(object):
         offset: str=None,
         limit: str=None,
         sort: str=None,
-        include: Union[str,list]=None):
+        include: Union[str,list]=None,
+        route: Union[str,list]=None,
+        stop: Union[str,list]=None,
+        trip: Union[str,list]=None,
+        schedule: Union[str,list]=None,
+        route_type: Union[str,list]=None,
+        direction_id: str=None,
+        date: str=None,
+        min_time: str=None,
+        max_time: str=None,
+        stop_sequence: str=None,):
         endpoint = "schedules"
         return endpoint
 
@@ -201,13 +241,16 @@ class MBTAReader(object):
         offset: str=None,
         limit: str=None,
         sort: str=None,
-        id: str=None):
+        id: Union[str,list]=None,
+        route: Union[str,list]=None,
+        service: Union[str,list]=None):
         endpoint = "services"
         return endpoint
 
     @__ask_the_api
     def get_service_by_id(self,
-        id: str):
+        id: str,
+        service: Union[str,list]=None,):
         endpoint = "services_by_id"
         return endpoint
 
@@ -216,14 +259,17 @@ class MBTAReader(object):
         offset: str=None,
         limit: str=None,
         sort: str=None,
-        include: Union[str,list]=None):
+        include: Union[str,list]=None,
+        route: Union[str,list]=None,
+        shape: Union[str,list]=None):
         endpoint = "shapes"
         return endpoint
 
     @__ask_the_api
     def get_shape_by_id(self,
         id: str,
-        include: Union[str,list]=None):
+        include: Union[str,list]=None,
+        shape: Union[str,list]=None):
         endpoint = "shapes_by_id"
         return endpoint
 
@@ -233,7 +279,18 @@ class MBTAReader(object):
         limit: str=None,
         sort: str=None,
         include: Union[str,list]=None,
-        id: str=None):
+        id: Union[str,list]=None,
+        route: Union[str,list]=None,
+        stop: Union[str,list]=None,
+        service: Union[str,list]=None,
+        route_type: Union[str,list]=None,
+        direction_id: str=None,
+        type: str=None,
+        latitude: str=None,
+        longitude: str=None,
+        radius: str=None,
+        date: str=None,
+        location_type: Union[str,list]=None):
         endpoint = "stops"
         return endpoint
 
@@ -251,14 +308,21 @@ class MBTAReader(object):
         limit: str=None,
         sort: str=None,
         include: Union[str,list]=None,
-        id: str=None):
+        id: Union[str,list]=None,
+        route: Union[str,list]=None,
+        trip: Union[str,list]=None,
+        direction_id: str=None,
+        route_pattern: Union[str,list]=None,
+        date: str=None,
+        name: Union[str,list]=None):
         endpoint = "trips"
         return endpoint
 
     @__ask_the_api
     def get_trip_by_id(self,
         id: str,
-        include: Union[str,list]=None):
+        include: Union[str,list]=None,
+        trip: Union[str,list]=None):
         endpoint = "trips_by_id"
         return endpoint
 
@@ -268,14 +332,21 @@ class MBTAReader(object):
         limit: str=None,
         sort: str=None,
         include: Union[str,list]=None,
-        id: str=None):
+        id: Union[str,list]=None,
+        route: Union[str,list]=None,
+        trip: Union[str,list]=None,
+        vehicle: str=None,
+        route_type: Union[str,list]=None,
+        direction_id: str=None,
+        label: Union[str,list]=None):
         endpoint = "vehicles"
         return endpoint
 
     @__ask_the_api
     def get_vehicle_by_id(self,
         id: str,
-        include: Union[str,list]=None):
+        include: Union[str,list]=None,
+        vehicle: str=None):
         endpoint = "vehicles_by_id"
         return endpoint
 
@@ -283,4 +354,7 @@ class MBTAReader(object):
 if __name__ == '__main__':
     api = MBTAReader()
 
-    print(api.get_prediction(stop='place-portr'))
+#    print(api.get_prediction(stop='place-portr', limit='3'))
+#    print(api.get_alerts(limit='3'))
+#    print(api.get_facilities(limit='3'))
+    print(api.get_lines(limit='3'))
